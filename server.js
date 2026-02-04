@@ -3,7 +3,17 @@
  * =============================================
  */
 
-require('dotenv').config();
+// Load .env in local dev only if available. In serverless environments
+// dotenv may not be installed (env provided by platform), so guard it.
+try {
+  // eslint-disable-next-line global-require
+  const dotenv = require('dotenv');
+  dotenv.config();
+} catch (e) {
+  // Not having dotenv is fine in production (Vercel). Log at debug level.
+  // This avoids crashes when `dotenv` isn't in dependencies.
+  // console.debug('dotenv not available, skipping .env load');
+}
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
