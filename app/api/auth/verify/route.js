@@ -30,6 +30,9 @@ export async function POST(request) {
     return Response.json({ success: true, token, profile: result.profile });
   } catch (error) {
     console.error('Login error:', error);
+    if (process.env.NODE_ENV === 'development') {
+      return Response.json({ success: false, error: 'حدث خطأ في الخادم', details: error.message, code: error.code, stack: error.stack }, { status: 500 });
+    }
     return Response.json({ success: false, error: 'حدث خطأ في الخادم' }, { status: 500 });
   }
 }
