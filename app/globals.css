@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans Arabic', 'Plus Jakarta Sans', sans-serif;
+  background: #f1f5f9;
+}
+
+/* RTL Support */
+[dir="rtl"] { text-align: right; }
+[dir="ltr"] { text-align: left; }
+
+/* Form Focus States */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #d4a574 !important;
+  box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.15) !important;
+}
+
+/* Animations */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-spin { animation: spin 1s linear infinite; }
+.animate-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+.animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
