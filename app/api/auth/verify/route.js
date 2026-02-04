@@ -1,6 +1,8 @@
 import { verifyLogin } from '@/lib/notion';
 import { createToken } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request) {
   try {
     const { profileId, password } = await request.json();
