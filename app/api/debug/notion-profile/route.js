@@ -7,12 +7,16 @@ export const dynamic = 'force-dynamic';
 export async function GET(request) {
   try {
     const debugKey = process.env.DEBUG_KEY;
-    const provided = request.headers.get('x-debug-key');
+    const providedHeader = request.headers.get('x-debug-key');
+    const url = new URL(request.url);
+    // Allow a one-time convenience `key` query param if header isn't available.
+    // This is less secure — remove after debugging.
+    const providedQuery = url.searchParams.get('key');
+    const provided = providedHeader || providedQuery;
     if (!debugKey || provided !== debugKey) {
       return Response.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
 
-    const url = new URL(request.url);
     const profileId = url.searchParams.get('profile');
     if (!profileId) return Response.json({ success: false, error: 'profile query required' }, { status: 400 });
 
