@@ -12,116 +12,84 @@ const NCTDashboard = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Demo customer data
-  const customer = {
-    profileId: 'NCTV-10',
-    name: 'أحمد محمد علي',
-    nameEn: 'Ahmed Mohammed Ali',
-    phone: '+964 770 123 4567',
-    email: 'ahmed@company.iq',
-    memberSince: '2024-01-15',
-    driveFolder: 'https://drive.google.com/drive/folders/example',
-  };
+  // Real data state
+  const [customer, setCustomer] = useState(null);
+  const [stats, setStats] = useState({
+    totalPages: 0,
+    totalWords: 0,
+    totalSpent: 0,
+    activeProjects: 0,
+  });
+  const [allProjects, setAllProjects] = useState([]);
 
-  // Demo statistics
-  const stats = {
-    totalPages: 1247,
-    totalWords: 312500,
-    totalSpent: 4750000,
-    activeProjects: 3,
-  };
-
-  // Demo projects data
-  const allProjects = [
-    {
-      id: 'NCT-089',
-      documentName: 'عقد شراكة تجارية',
-      documentNameEn: 'Business Partnership Contract',
-      language: 'EN→AR',
-      pages: 24,
-      words: 6200,
-      status: 'Translation',
-      paymentStatus: 'Partially Paid',
-      amount: 360000,
-      date: '2026-02-01',
-      folder: 'https://drive.google.com/folder1',
-      filesFolder: 'https://drive.google.com/folder1/files',
-    },
-    {
-      id: 'NCT-088',
-      documentName: 'تقرير مالي سنوي',
-      documentNameEn: 'Annual Financial Report',
-      language: 'AR→EN',
-      pages: 45,
-      words: 12000,
-      status: 'Proofreading',
-      paymentStatus: 'Unpaid',
-      amount: 675000,
-      date: '2026-01-28',
-      folder: 'https://drive.google.com/folder2',
-      filesFolder: 'https://drive.google.com/folder2/files',
-    },
-    {
-      id: 'NCT-087',
-      documentName: 'شهادة جامعية',
-      documentNameEn: 'University Certificate',
-      language: 'AR→EN',
-      pages: 2,
-      words: 350,
-      status: 'Done',
-      paymentStatus: 'Fully Paid',
-      amount: 45000,
-      date: '2026-01-25',
-      folder: 'https://drive.google.com/folder3',
-      filesFolder: 'https://drive.google.com/folder3/files',
-    },
-    {
-      id: 'NCT-086',
-      documentName: 'دليل المستخدم التقني',
-      documentNameEn: 'Technical User Manual',
-      language: 'EN→AR',
-      pages: 78,
-      words: 18500,
-      status: 'Done',
-      paymentStatus: 'Fully Paid',
-      amount: 1170000,
-      date: '2026-01-20',
-      folder: 'https://drive.google.com/folder4',
-      filesFolder: 'https://drive.google.com/folder4/files',
-    },
-    {
-      id: 'NCT-085',
-      documentName: 'عقد توظيف',
-      documentNameEn: 'Employment Contract',
-      language: 'EN→AR',
-      pages: 8,
-      words: 2100,
-      status: 'Done',
-      paymentStatus: 'Fully Paid',
-      amount: 120000,
-      date: '2026-01-15',
-      folder: 'https://drive.google.com/folder5',
-      filesFolder: 'https://drive.google.com/folder5/files',
-    },
-    {
-      id: 'NCT-084',
-      documentName: 'براءة اختراع',
-      documentNameEn: 'Patent Document',
-      language: 'EN→AR',
-      pages: 32,
-      words: 8400,
-      status: 'Delivery',
-      paymentStatus: 'Fully Paid',
-      amount: 480000,
-      date: '2026-01-10',
-      folder: 'https://drive.google.com/folder6',
-      filesFolder: 'https://drive.google.com/folder6/files',
-    },
-  ];
-
-  // Simulate loading
+  // Fetch data from API
   useEffect(() => {
-    setTimeout(() => setIsLoading(false), 1000);
+    const token = localStorage.getItem('nct_token');
+    if (!token) {
+      window.location.href = '/login';
+      return;
+    }
+
+    const fetchData = async () => {
+      try {
+        const headers = { 'Authorization': `Bearer ${token}` };
+
+        // Fetch profile, stats, and projects in parallel
+        const [profileRes, statsRes, projectsRes] = await Promise.all([
+          fetch('/api/customer/profile', { headers }),
+          fetch('/api/customer/stats', { headers }),
+          fetch('/api/projects', { headers }),
+        ]);
+
+        const profileData = await profileRes.json();
+        const statsData = await statsRes.json();
+        const projectsData = await projectsRes.json();
+
+        if (profileData.success) {
+          setCustomer({
+            profileId: profileData.profile.profileId,
+            name: profileData.profile.name,
+            nameEn: profileData.profile.name,
+            phone: profileData.profile.phone || '',
+            email: profileData.profile.email || '',
+            memberSince: profileData.profile.createdAt,
+            driveFolder: profileData.profile.driveFolder || '',
+          });
+        }
+
+        if (statsData.success) {
+          setStats({
+            totalPages: statsData.stats.totalPages || 0,
+            totalWords: statsData.stats.totalWords || 0,
+            totalSpent: statsData.stats.totalSpent || 0,
+            activeProjects: statsData.stats.activeProjects || 0,
+          });
+        }
+
+        if (projectsData.success) {
+          setAllProjects(projectsData.projects.map(p => ({
+            id: p.customerId || p.id,
+            documentName: p.documentName,
+            documentNameEn: p.documentName,
+            language: p.language || '',
+            pages: p.pages || 0,
+            words: p.words || 0,
+            status: p.status || 'New Request',
+            paymentStatus: p.paymentStatus || 'Unpaid',
+            amount: p.total || 0,
+            date: p.createdAt,
+            folder: p.folder || '',
+            filesFolder: p.pdfFolder || p.folder || '',
+          })));
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   // Filter and sort projects
@@ -210,8 +178,31 @@ const NCTDashboard = () => {
 
   const handleLogout = () => {
     if (confirm('هل تريد تسجيل الخروج؟')) {
+      localStorage.removeItem('nct_token');
+      localStorage.removeItem('nct_profile');
       window.location.href = '/login';
     }
+  };
+
+  // Show loading if customer not loaded yet
+  if (!customer && isLoading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9' }}>
+        <div style={{ width: '40px', height: '40px', border: '3px solid #e2e8f0', borderTopColor: '#1a365d', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  // Fallback customer data if API failed
+  const displayCustomer = customer || {
+    profileId: 'N/A',
+    name: 'Loading...',
+    nameEn: '',
+    phone: '',
+    email: '',
+    memberSince: new Date().toISOString(),
+    driveFolder: '',
   };
 
   return (
@@ -232,14 +223,14 @@ const NCTDashboard = () => {
               <h1 style={styles.portalTitle}>بوابة العملاء</h1>
               <span style={styles.vipBadgeSmall}>
                 <CrownIcon />
-                {customer.profileId}
+                {displayCustomer.profileId}
               </span>
             </div>
           </div>
           
           <div style={styles.headerRight}>
             <div style={styles.userInfo}>
-              <span style={styles.userName}>{customer.name}</span>
+              <span style={styles.userName}>{displayCustomer.name}</span>
               <a href="/settings" style={styles.settingsBtn}>
                 <SettingsIcon />
               </a>
@@ -263,8 +254,8 @@ const NCTDashboard = () => {
         {isMenuOpen && (
           <div style={styles.mobileMenu}>
             <div style={styles.mobileUserInfo}>
-              <span style={styles.mobileUserName}>{customer.name}</span>
-              <span style={styles.mobileVipBadge}>{customer.profileId}</span>
+              <span style={styles.mobileUserName}>{displayCustomer.name}</span>
+              <span style={styles.mobileVipBadge}>{displayCustomer.profileId}</span>
             </div>
             <a href="/settings" style={styles.mobileSettingsBtn}>
               <SettingsIcon />
@@ -319,15 +310,15 @@ const NCTDashboard = () => {
             <div style={styles.profileHeader}>
               <div style={styles.avatarSection}>
                 <div style={styles.avatar}>
-                  {customer.name.charAt(0)}
+                  {displayCustomer.name.charAt(0)}
                 </div>
                 <div style={styles.profileInfo}>
-                  <h2 style={styles.profileName}>{customer.name}</h2>
-                  <p style={styles.profileNameEn}>{customer.nameEn}</p>
+                  <h2 style={styles.profileName}>{displayCustomer.name}</h2>
+                  <p style={styles.profileNameEn}>{displayCustomer.nameEn}</p>
                 </div>
               </div>
               <a 
-                href={customer.driveFolder} 
+                href={displayCustomer.driveFolder} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 style={styles.driveButton}
@@ -340,15 +331,15 @@ const NCTDashboard = () => {
             <div style={styles.profileDetails}>
               <div style={styles.profileItem}>
                 <PhoneIcon />
-                <span style={{direction: 'ltr'}}>{customer.phone}</span>
+                <span style={{direction: 'ltr'}}>{displayCustomer.phone}</span>
               </div>
               <div style={styles.profileItem}>
                 <EmailIcon />
-                <span>{customer.email}</span>
+                <span>{displayCustomer.email}</span>
               </div>
               <div style={styles.profileItem}>
                 <CalendarIcon />
-                <span>عضو منذ {formatDate(customer.memberSince)}</span>
+                <span>عضو منذ {formatDate(displayCustomer.memberSince)}</span>
               </div>
             </div>
           </div>
