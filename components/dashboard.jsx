@@ -93,10 +93,12 @@ const NCTDashboard = () => {
   }, []);
 
   // Filter and sort projects
+  // Archive = Done = مكتمل (completed)
+  const completedStatuses = ['Done', 'Archive', 'Delivered'];
   const filteredProjects = allProjects
     .filter(p => {
-      if (activeFilter === 'active') return !['Done'].includes(p.status);
-      if (activeFilter === 'completed') return p.status === 'Done';
+      if (activeFilter === 'active') return !completedStatuses.includes(p.status);
+      if (activeFilter === 'completed') return completedStatuses.includes(p.status);
       return true;
     })
     .filter(p => 
