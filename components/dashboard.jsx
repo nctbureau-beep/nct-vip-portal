@@ -53,7 +53,7 @@ const NCTDashboard = () => {
             phone: profileData.profile.phone || '',
             email: profileData.profile.email || '',
             memberSince: profileData.profile.createdAt,
-            driveFolder: profileData.profile.driveFolder || '',
+            driveFolder: profileData.profile.portalFolder || profileData.profile.driveFolder || '',
           });
         }
 
